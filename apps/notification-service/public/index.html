@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Carteira ao vivo</title>
+    <style>
+      :root {
+        --bg: #f6f7f9;
+        --card: #ffffff;
+        --text: #1d2330;
+        --muted: #667085;
+        --accent: #0f766e;
+        --border: #e4e7ec;
+        --ok: #067647;
+        --err: #b42318;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font: 15px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+      main { max-width: 640px; margin: 32px auto; padding: 0 16px; }
+      h1 { font-size: 22px; margin: 0 0 4px; }
+      p.lead { color: var(--muted); margin: 0 0 24px; }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 16px;
+      }
+      label { display: block; font-weight: 600; margin-bottom: 6px; }
+      .row { display: flex; gap: 8px; }
+      input {
+        flex: 1;
+        min-width: 0;
+        padding: 9px 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font: inherit;
+      }
+      button {
+        padding: 9px 16px;
+        border: 0;
+        border-radius: 8px;
+        background: var(--accent);
+        color: #fff;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button:disabled { opacity: 0.6; cursor: default; }
+      #status { margin-top: 10px; font-size: 14px; color: var(--muted); }
+      #status.ok { color: var(--ok); }
+      #status.err { color: var(--err); }
+      .balance { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; }
+      .muted { color: var(--muted); font-size: 13px; }
+      ul { list-style: none; margin: 0; padding: 0; }
+      li {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 0;
+        border-top: 1px solid var(--border);
+        font-variant-numeric: tabular-nums;
+      }
+      li:first-child { border-top: 0; }
+      code {
+        display: block;
+        white-space: pre-wrap;
+        word-break: break-all;
+        background: #f2f4f7;
+        border-radius: 6px;
+        padding: 10px;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Carteira ao vivo</h1>
+      <p class="lead">
+        Conecte-se como um jogador e veja o saldo mudar em tempo real a cada depósito ou saque.
+      </p>
+
+      <section class="card">
+        <label for="playerId">ID do jogador</label>
+        <div class="row">
+          <input id="playerId" placeholder="ex.: 3f1c7c1e-..." autocomplete="off" />
+          <button id="connect">Conectar</button>
+        </div>
+        <div id="status">Desconectado.</div>
+      </section>
+
+      <section class="card">
+        <div class="muted">Saldo atual</div>
+        <div class="balance" id="balance">--</div>
+        <div class="muted" id="wallet"></div>
+      </section>
+
+      <section class="card">
+        <div class="muted" style="margin-bottom: 8px">Notificações recebidas (balance.updated)</div>
+        <ul id="events"><li class="muted">Nenhuma ainda.</li></ul>
+      </section>
+
+      <section class="card" id="tip" hidden>
+        <div class="muted" style="margin-bottom: 8px">Faça um depósito em outro terminal:</div>
+        <code id="curl"></code>
+      </section>
+    </main>
+
+    <!-- O próprio servidor socket.io entrega a biblioteca cliente neste caminho. -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+      let socket;
+
+      // Permite abrir a página já com o jogador: /?playerId=...
+      $('playerId').value = new URLSearchParams(location.search).get('playerId') || '';
+
+      function setStatus(text, kind) {
+        $('status').textContent = text;
+        $('status').className = kind || '';
+      }
+
+      $('connect').addEventListener('click', async () => {
+        const playerId = $('playerId').value.trim();
+        if (!playerId) return setStatus('Informe o ID do jogador.', 'err');
+        if (socket) socket.disconnect();
+
+        $('connect').disabled = true;
+        try {
+          // 1) Pede um token de teste (em produção viria do login).
+          const res = await fetch('/dev/tokens', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId }),
+          });
+          if (!res.ok) throw new Error('não foi possível gerar o token (HTTP ' + res.status + ')');
+          const { token } = await res.json();
+
+          // 2) Conecta enviando o token no handshake.
+          socket = io({ auth: { token } });
+          socket.on('connect', () => setStatus('Conectado como ' + playerId + '.', 'ok'));
+          socket.on('connect_error', (err) => setStatus('Conexão recusada: ' + err.message, 'err'));
+          socket.on('disconnect', () => setStatus('Desconectado.'));
+
+          // 3) Recebe só os eventos deste jogador (sala própria no servidor).
+          socket.on('balance.updated', (event) => {
+            $('balance').textContent = brl.format(event.balance.amountCents / 100);
+            $('wallet').textContent = 'Carteira ' + event.walletId;
+            if ($('events').querySelector('.muted')) $('events').innerHTML = '';
+            const item = document.createElement('li');
+            const when = new Date(event.occurredAt).toLocaleTimeString('pt-BR');
+            item.innerHTML = '<span></span><strong></strong>';
+            item.children[0].textContent = when + ' | lançamento ' + event.transactionId.slice(0, 8);
+            item.children[1].textContent = brl.format(event.balance.amountCents / 100);
+            $('events').prepend(item);
+
+            $('tip').hidden = false;
+            $('curl').textContent =
+              'curl -X POST http://localhost:3000/wallets/' + event.walletId + '/deposits ' +
+              '-H "Content-Type: application/json" -H "Idempotency-Key: ' + crypto.randomUUID() + '" ' +
+              '-d \'{"amountCents": 1000}\'';
+          });
+        } catch (err) {
+          setStatus('Erro: ' + err.message, 'err');
+        } finally {
+          $('connect').disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

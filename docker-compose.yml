@@ -107,5 +107,32 @@ services:
       timeout: 5s
       retries: 10
 
+  notification-service:
+    build:
+      context: .
+      dockerfile: apps/notification-service/Dockerfile
+    environment:
+      <<: *aws-env
+      PORT: 3001
+      NOTIFICATIONS_QUEUE_URL: http://localstack:4566/000000000000/notifications-queue
+      JWT_SECRET: segredo-temporario
+      # Só para a demonstração local: libera POST /dev/tokens.
+      ENABLE_DEV_TOKENS: 'true'
+      LOG_LEVEL: info
+    ports:
+      - '3001:3001'
+    depends_on:
+      localstack:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://localhost:3001/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
 volumes:
   postgres-data:
