@@ -55,3 +55,8 @@ export type EventEnvelope = DomainEvent & {
   occurredAt: string;
   correlationId: string;
 };
+
+/** Chave do CSV no bucket. Usada pelo wallet-service e pelo statement-worker. */
+export function statementObjectKey(walletId: string, statementId: string): string {
+  return `statements/${walletId}/${statementId}.csv`;
+}

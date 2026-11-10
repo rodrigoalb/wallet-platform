@@ -58,6 +58,11 @@ services:
       DB_NAME: wallet
       DB_USER: ${DB_USER:-wallet}
       DB_PASSWORD: ${DB_PASSWORD:-wallet-local-password}
+      EVENTS_TOPIC_ARN: arn:aws:sns:us-east-1:000000000000:wallet-events
+      STATEMENTS_BUCKET: wallet-statements
+      STATEMENT_URL_TTL_SECONDS: 300
+      # As URLs pré-assinadas são abertas no seu navegador, que enxerga "localhost".
+      AWS_PUBLIC_ENDPOINT: http://localhost:4566
       LOG_LEVEL: info
     ports:
       - '3000:3000'
@@ -72,6 +77,32 @@ services:
         - node
         - -e
         - "fetch('http://localhost:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  statement-worker:
+    build:
+      context: .
+      dockerfile: apps/statement-worker/Dockerfile
+    environment:
+      <<: *aws-env
+      PORT: 3002
+      STATEMENTS_QUEUE_URL: http://localstack:4566/000000000000/statements-queue
+      STATEMENTS_BUCKET: wallet-statements
+      WALLET_SERVICE_URL: http://wallet-service:3000
+      LOG_LEVEL: info
+    depends_on:
+      localstack:
+        condition: service_healthy
+      wallet-service:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://localhost:3002/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
       interval: 10s
       timeout: 5s
       retries: 10

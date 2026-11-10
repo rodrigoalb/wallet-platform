@@ -8,6 +8,7 @@ import {
   TransactionRepository,
 } from '../wallets/domain/transaction.repository';
 import { Player } from '../players/domain/player.entity';
+import { StatementStorage } from '../statements/application/statement-storage';
 import { PlayerRepository } from '../players/domain/player.repository';
 import { Wallet } from '../wallets/domain/wallet.entity';
 import { WalletRepository } from '../wallets/domain/wallet.repository';
@@ -90,5 +91,17 @@ export class RecordingEventPublisher implements EventPublisher {
   publish(events: DomainEvent[]): Promise<void> {
     this.published.push(...events);
     return Promise.resolve();
+  }
+}
+
+export class InMemoryStatementStorage implements StatementStorage {
+  readonly objects = new Set<string>();
+
+  exists(objectKey: string): Promise<boolean> {
+    return Promise.resolve(this.objects.has(objectKey));
+  }
+
+  createDownloadUrl(objectKey: string, ttlSeconds: number): Promise<string> {
+    return Promise.resolve(`https://s3.example/${objectKey}?expires=${ttlSeconds}`);
   }
 }

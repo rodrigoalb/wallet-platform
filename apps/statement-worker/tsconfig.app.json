@@ -1,0 +1,7 @@
+{
+  "extends": "../../tsconfig.build.json",
+  "compilerOptions": {
+    "outDir": "../../dist/apps/statement-worker"
+  },
+  "include": ["src/**/*", "../../libs/common/src/**/*"]
+}

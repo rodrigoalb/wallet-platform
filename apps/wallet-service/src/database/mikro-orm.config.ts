@@ -2,6 +2,7 @@ import { createLogger } from '@app/common';
 import { Migrator } from '@mikro-orm/migrations';
 import { defineConfig, Options } from '@mikro-orm/postgresql';
 import { Player } from '../players/domain/player.entity';
+import { Statement } from '../statements/domain/statement.entity';
 import { Transaction } from '../wallets/domain/transaction.entity';
 import { Wallet } from '../wallets/domain/wallet.entity';
 import { DatabaseConfig, readDatabaseConfigFromEnv } from '../config/wallet-config';
@@ -20,7 +21,7 @@ export function buildOrmConfig(db: DatabaseConfig): Options {
     user: db.user,
     password: db.password,
     dbName: db.name,
-    entities: [Player, Wallet, Transaction],
+    entities: [Player, Wallet, Transaction, Statement],
     extensions: [Migrator],
     migrations: {
       tableName: 'mikro_orm_migrations',

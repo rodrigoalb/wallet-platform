@@ -1,4 +1,4 @@
-import { boolEnv, intEnv, optionalEnv } from '@app/common';
+import { AwsConfig, boolEnv, intEnv, optionalEnv, readAwsConfigFromEnv } from '@app/common';
 
 export interface DatabaseConfig {
   host: string;
@@ -12,6 +12,11 @@ export interface WalletServiceConfig {
   port: number;
   database: DatabaseConfig;
   runMigrationsOnStartup: boolean;
+  aws: AwsConfig;
+  eventsTopicArn: string;
+  statementsBucket: string;
+  /** Validade das URLs pré-assinadas de download do extrato. */
+  statementUrlTtlSeconds: number;
 }
 
 /** Token de injeção da configuração (equivalente a um @ConfigurationProperties do Spring). */
@@ -32,5 +37,12 @@ export function loadWalletConfig(): WalletServiceConfig {
     port: intEnv('PORT', 3000),
     database: readDatabaseConfigFromEnv(),
     runMigrationsOnStartup: boolEnv('RUN_MIGRATIONS', true),
+    aws: readAwsConfigFromEnv(),
+    eventsTopicArn: optionalEnv(
+      'EVENTS_TOPIC_ARN',
+      'arn:aws:sns:us-east-1:000000000000:wallet-events',
+    ),
+    statementsBucket: optionalEnv('STATEMENTS_BUCKET', 'wallet-statements'),
+    statementUrlTtlSeconds: intEnv('STATEMENT_URL_TTL_SECONDS', 300),
   };
 }

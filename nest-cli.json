@@ -26,6 +26,15 @@
       "compilerOptions": {
         "tsConfigPath": "libs/common/tsconfig.lib.json"
       }
+    },
+    "statement-worker": {
+      "type": "application",
+      "root": "apps/statement-worker",
+      "entryFile": "main",
+      "sourceRoot": "apps/statement-worker/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/statement-worker/tsconfig.app.json"
+      }
     }
   }
 }
