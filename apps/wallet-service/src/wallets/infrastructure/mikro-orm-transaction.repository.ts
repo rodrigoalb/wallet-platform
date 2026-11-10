@@ -2,7 +2,8 @@ import { FilterQuery } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { Transaction } from '../domain/transaction.entity';
-import { Page, TransactionFilter, TransactionRepository } from '../domain/transaction.repository';
+import { Page } from '../../shared/domain/page';
+import { TransactionFilter, TransactionRepository } from '../domain/transaction.repository';
 
 @Injectable()
 export class MikroOrmTransactionRepository implements TransactionRepository {

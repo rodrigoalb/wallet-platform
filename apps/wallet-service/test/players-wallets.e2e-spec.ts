@@ -62,6 +62,54 @@ describe('Jogadores e carteiras (e2e)', () => {
     expect(generated.headers['x-correlation-id']).toMatch(/^[0-9a-f-]{36}$/);
   });
 
+  it('GET /players lista os jogadores com paginação, mais recentes primeiro', async () => {
+    const created: string[] = [];
+    for (const name of ['Lista Um', 'Lista Dois', 'Lista Tres']) {
+      const res = await request(app.getHttpServer())
+        .post('/players')
+        .send({ name, email: `${name.replace(' ', '.').toLowerCase()}@example.com` })
+        .expect(201);
+      created.push(res.body.id);
+    }
+
+    const all = await request(app.getHttpServer()).get('/players?limit=100').expect(200);
+    const ids = (all.body.items as { id: string }[]).map((p) => p.id);
+    expect(ids).toEqual(expect.arrayContaining(created));
+    // O último criado aparece antes do primeiro.
+    expect(ids.indexOf(created[2])).toBeLessThan(ids.indexOf(created[0]));
+
+    const page = await request(app.getHttpServer()).get('/players?page=1&limit=2').expect(200);
+    expect(page.body).toMatchObject({ page: 1, limit: 2, total: all.body.total });
+    expect(page.body.items).toHaveLength(2);
+
+    await request(app.getHttpServer()).get('/players?limit=1000').expect(400);
+  });
+
+  it('GET /players/:id/wallet devolve a carteira do jogador', async () => {
+    const player = await request(app.getHttpServer())
+      .post('/players')
+      .send({ name: 'Dono', email: 'dono@example.com' })
+      .expect(201);
+
+    const before = await request(app.getHttpServer())
+      .get(`/players/${player.body.id}/wallet`)
+      .expect(404);
+    expect(before.body.error).toBe('WALLET_NOT_FOUND');
+
+    const wallet = await request(app.getHttpServer())
+      .post(`/players/${player.body.id}/wallet`)
+      .expect(201);
+    const found = await request(app.getHttpServer())
+      .get(`/players/${player.body.id}/wallet`)
+      .expect(200);
+    expect(found.body.id).toBe(wallet.body.id);
+
+    const missing = await request(app.getHttpServer())
+      .get('/players/7b0e8b7e-8f3a-4d55-9d0e-0b6a3c1e2f10/wallet')
+      .expect(404);
+    expect(missing.body.error).toBe('PLAYER_NOT_FOUND');
+  });
+
   it('padroniza erros de validação, conflito e não encontrado', async () => {
     const invalid = await request(app.getHttpServer())
       .post('/players')

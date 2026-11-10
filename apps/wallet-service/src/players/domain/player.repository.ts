@@ -1,3 +1,4 @@
+import { Page, PageRequest } from '../../shared/domain/page';
 import { Player } from './player.entity';
 
 /**
@@ -7,6 +8,8 @@ import { Player } from './player.entity';
 export interface PlayerRepository {
   findById(id: string): Promise<Player | null>;
   findByEmail(email: string): Promise<Player | null>;
+  /** Mais recentes primeiro. */
+  findPage(request: PageRequest): Promise<Page<Player>>;
   save(player: Player): Promise<void>;
 }
 

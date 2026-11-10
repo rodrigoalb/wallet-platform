@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { NotFoundError } from '../../shared/domain/errors';
 import { Transaction } from '../domain/transaction.entity';
+import { Page } from '../../shared/domain/page';
 import {
-  Page,
   TRANSACTION_REPOSITORY,
   TransactionFilter,
   TransactionRepository,

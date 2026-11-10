@@ -2,11 +2,8 @@ import { DomainEvent } from '@app/common';
 import { EventPublisher } from '../shared/application/event-publisher';
 import { TransactionManager } from '../shared/application/transaction-manager';
 import { Transaction } from '../wallets/domain/transaction.entity';
-import {
-  Page,
-  TransactionFilter,
-  TransactionRepository,
-} from '../wallets/domain/transaction.repository';
+import { Page, PageRequest } from '../shared/domain/page';
+import { TransactionFilter, TransactionRepository } from '../wallets/domain/transaction.repository';
 import { Player } from '../players/domain/player.entity';
 import { StatementStorage } from '../statements/application/statement-storage';
 import { PlayerRepository } from '../players/domain/player.repository';
@@ -27,6 +24,14 @@ export class InMemoryPlayerRepository implements PlayerRepository {
   findByEmail(email: string): Promise<Player | null> {
     const normalized = Player.normalizeEmail(email);
     return Promise.resolve([...this.items.values()].find((p) => p.email === normalized) ?? null);
+  }
+
+  findPage({ page, limit }: PageRequest): Promise<Page<Player>> {
+    const all = [...this.items.values()];
+    return Promise.resolve({
+      items: all.slice((page - 1) * limit, page * limit),
+      total: all.length,
+    });
   }
 
   save(player: Player): Promise<void> {

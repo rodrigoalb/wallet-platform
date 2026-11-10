@@ -1,17 +1,11 @@
+import { Page, PageRequest } from '../../shared/domain/page';
 import { Transaction, TransactionType } from './transaction.entity';
 
-export interface TransactionFilter {
+export interface TransactionFilter extends PageRequest {
   walletId: string;
   type?: TransactionType;
   from?: Date;
   to?: Date;
-  page: number;
-  limit: number;
-}
-
-export interface Page<T> {
-  items: T[];
-  total: number;
 }
 
 /** O ledger só aceita inserções: não existe update nem delete nesta porta. */

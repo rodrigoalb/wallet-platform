@@ -107,6 +107,13 @@ curl -s -X POST localhost:3000/players/$PLAYER_ID/wallet
 WALLET_ID=<id da carteira>
 ```
 
+São dois ids diferentes: o do **jogador** (usado na página WebSocket e em `/players/...`) e o da **carteira** (usado em depósitos, saques, saldo e extrato). Se perder algum, recupere pela própria API:
+
+```bash
+curl -s "localhost:3000/players?page=1&limit=20"   # lista os jogadores, mais recentes primeiro
+curl -s localhost:3000/players/$PLAYER_ID/wallet    # carteira de um jogador
+```
+
 **2. Abrir a página WebSocket**
 
 Abra http://localhost:3001/?playerId=SEU_PLAYER_ID e clique em **Conectar**. A página pede um token de teste em `POST /dev/tokens` e se conecta enviando o token no handshake.
@@ -254,8 +261,8 @@ npm run test:e2e      # e2e do wallet-service com supertest contra o Postgres re
 npm run lint && npm run format:check && npm run typecheck
 ```
 
-- **Unitários (46):** `Money`, `Wallet`, casos de uso com repositórios em memória, gerador de CSV, handlers dos consumidores, emissão e validação de JWT e o gateway socket.io com clientes reais.
-- **E2E (19):** sobem a aplicação inteira contra PostgreSQL, aplicam as migrações do zero e cobrem idempotência, concorrência, filtros, paginação, erros padronizados e o trigger do ledger. Um teste compara as migrações com as entidades: se alguém mudar uma entidade e esquecer a migração, ele falha.
+- **Unitários (48):** `Money`, `Wallet`, casos de uso com repositórios em memória, gerador de CSV, handlers dos consumidores, emissão e validação de JWT e o gateway socket.io com clientes reais.
+- **E2E (21):** sobem a aplicação inteira contra PostgreSQL, aplicam as migrações do zero e cobrem idempotência, concorrência, filtros, paginação, erros padronizados e o trigger do ledger. Um teste compara as migrações com as entidades: se alguém mudar uma entidade e esquecer a migração, ele falha.
 - **CI:** [.github/workflows/ci.yml](.github/workflows/ci.yml) roda lint, formatação, tipos, testes unitários, e2e (com Postgres como service) e o build das imagens Docker a cada push e pull request.
 
 ## Limitações conhecidas e próximos passos

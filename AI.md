@@ -30,7 +30,7 @@ Situações reais desta construção em que a primeira opção não servia ou um
 
 ## Como validei
 
-- **Testes automatizados:** 46 testes unitários e 19 e2e contra PostgreSQL real, todos passando. Destaques:
+- **Testes automatizados:** 48 testes unitários e 21 e2e contra PostgreSQL real, todos passando. Destaques:
   - um teste compara o esquema gerado pelas migrações com as entidades;
   - 8 depósitos simultâneos na mesma carteira: o saldo final é exatamente a soma dos aceitos;
   - 5 requisições simultâneas com a mesma `Idempotency-Key` geram um único lançamento;

@@ -3,6 +3,7 @@ import { ApiHeader, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { IdempotencyKey } from '../../shared/http/idempotency-key.decorator';
 import { CreateWalletUseCase } from '../application/create-wallet.use-case';
+import { GetPlayerWalletUseCase } from '../application/get-player-wallet.use-case';
 import { GetWalletUseCase } from '../application/get-wallet.use-case';
 import { ListTransactionsUseCase } from '../application/list-transactions.use-case';
 import { MovementResult, RegisterMovementUseCase } from '../application/register-movement.use-case';
@@ -24,6 +25,7 @@ export class WalletsController {
   constructor(
     private readonly createWallet: CreateWalletUseCase,
     private readonly getWallet: GetWalletUseCase,
+    private readonly getPlayerWallet: GetPlayerWalletUseCase,
     private readonly registerMovement: RegisterMovementUseCase,
     private readonly listTransactions: ListTransactionsUseCase,
   ) {}
@@ -31,6 +33,11 @@ export class WalletsController {
   @Post('players/:playerId/wallet')
   async create(@Param('playerId', ParseUUIDPipe) playerId: string): Promise<WalletResponse> {
     return WalletResponse.from(await this.createWallet.execute(playerId));
+  }
+
+  @Get('players/:playerId/wallet')
+  async findByPlayer(@Param('playerId', ParseUUIDPipe) playerId: string): Promise<WalletResponse> {
+    return WalletResponse.from(await this.getPlayerWallet.execute(playerId));
   }
 
   @Get('wallets/:id')
