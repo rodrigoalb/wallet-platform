@@ -1,4 +1,11 @@
-import { AwsConfig, boolEnv, intEnv, optionalEnv, readAwsConfigFromEnv } from '@app/common';
+import {
+  AwsConfig,
+  boolEnv,
+  intEnv,
+  loadJsonSecret,
+  optionalEnv,
+  readAwsConfigFromEnv,
+} from '@app/common';
 
 export interface DatabaseConfig {
   host: string;
@@ -32,12 +39,27 @@ export function readDatabaseConfigFromEnv(): DatabaseConfig {
   };
 }
 
-export function loadWalletConfig(): WalletServiceConfig {
+/**
+ * Monta a configuração. Se DB_SECRET_ID estiver definido (caso do Docker),
+ * usuário e senha do banco vêm do Secrets Manager; sem ele (testes e
+ * desenvolvimento local), vêm das variáveis de ambiente.
+ */
+export async function loadWalletConfig(): Promise<WalletServiceConfig> {
+  const aws = readAwsConfigFromEnv();
+  const database = readDatabaseConfigFromEnv();
+
+  const dbSecretId = process.env.DB_SECRET_ID;
+  if (dbSecretId) {
+    const secret = await loadJsonSecret<{ username: string; password: string }>(aws, dbSecretId);
+    database.user = secret.username;
+    database.password = secret.password;
+  }
+
   return {
     port: intEnv('PORT', 3000),
-    database: readDatabaseConfigFromEnv(),
+    database,
     runMigrationsOnStartup: boolEnv('RUN_MIGRATIONS', true),
-    aws: readAwsConfigFromEnv(),
+    aws,
     eventsTopicArn: optionalEnv(
       'EVENTS_TOPIC_ARN',
       'arn:aws:sns:us-east-1:000000000000:wallet-events',

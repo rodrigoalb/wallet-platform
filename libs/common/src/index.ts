@@ -1,4 +1,5 @@
 export * from './aws/aws-config';
+export * from './aws/secrets';
 export * from './config/env';
 export * from './events/wallet-events';
 export * from './logging/correlation';

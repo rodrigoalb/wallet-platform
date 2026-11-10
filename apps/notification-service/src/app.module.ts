@@ -4,7 +4,11 @@ import { Module } from '@nestjs/common';
 import { PLAYER_NOTIFIER } from './application/player-notifier';
 import { WalletEventHandler } from './application/wallet-event.handler';
 import { PlayerTokenService } from './auth/player-token.service';
-import { loadNotificationConfig, NOTIFICATION_CONFIG, NotificationConfig } from './config';
+import {
+  loadNotificationConfigWithSecrets,
+  NOTIFICATION_CONFIG,
+  NotificationConfig,
+} from './config';
 import { NotificationsQueueListener } from './infrastructure/notifications-queue.listener';
 import { DevTokensController } from './presentation/dev-tokens.controller';
 import { HealthController } from './presentation/health.controller';
@@ -13,7 +17,7 @@ import { NotificationsGateway } from './presentation/notifications.gateway';
 @Module({
   controllers: [HealthController, DevTokensController],
   providers: [
-    { provide: NOTIFICATION_CONFIG, useFactory: () => loadNotificationConfig() },
+    { provide: NOTIFICATION_CONFIG, useFactory: loadNotificationConfigWithSecrets },
     {
       provide: SQSClient,
       inject: [NOTIFICATION_CONFIG],

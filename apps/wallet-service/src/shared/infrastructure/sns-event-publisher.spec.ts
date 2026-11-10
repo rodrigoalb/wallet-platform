@@ -6,7 +6,10 @@ import { SnsEventPublisher } from './sns-event-publisher';
 describe('SnsEventPublisher', () => {
   it('envia o envelope com eventId, correlationId e o atributo usado pelos filtros', async () => {
     const send = jest.fn().mockResolvedValue({});
-    const publisher = new SnsEventPublisher({ send } as unknown as SNSClient, loadWalletConfig());
+    const publisher = new SnsEventPublisher(
+      { send } as unknown as SNSClient,
+      await loadWalletConfig(),
+    );
 
     await runWithCorrelationId('req-42', () =>
       publisher.publish([

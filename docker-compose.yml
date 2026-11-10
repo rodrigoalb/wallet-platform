@@ -56,8 +56,8 @@ services:
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: wallet
-      DB_USER: ${DB_USER:-wallet}
-      DB_PASSWORD: ${DB_PASSWORD:-wallet-local-password}
+      # Usuário e senha NÃO estão aqui: o serviço os lê do Secrets Manager.
+      DB_SECRET_ID: wallet-platform/database
       EVENTS_TOPIC_ARN: arn:aws:sns:us-east-1:000000000000:wallet-events
       STATEMENTS_BUCKET: wallet-statements
       STATEMENT_URL_TTL_SECONDS: 300
@@ -115,7 +115,8 @@ services:
       <<: *aws-env
       PORT: 3001
       NOTIFICATIONS_QUEUE_URL: http://localstack:4566/000000000000/notifications-queue
-      JWT_SECRET: segredo-temporario
+      # O segredo de assinatura dos tokens vem do Secrets Manager.
+      JWT_SECRET_ID: wallet-platform/jwt
       # Só para a demonstração local: libera POST /dev/tokens.
       ENABLE_DEV_TOKENS: 'true'
       LOG_LEVEL: info
