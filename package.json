@@ -22,7 +22,10 @@
     "migration:create": "mikro-orm migration:create",
     "migration:up": "mikro-orm migration:up",
     "migration:check": "mikro-orm migration:check",
-    "seed": "ts-node -r tsconfig-paths/register apps/wallet-service/src/database/seed.ts"
+    "seed": "ts-node -r tsconfig-paths/register apps/wallet-service/src/database/seed.ts",
+    "up": "docker compose up -d --build",
+    "down": "docker compose down",
+    "logs": "docker compose logs -f"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -55,6 +58,7 @@
     "@nestjs/swagger": "^11.4.8",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
+    "pino": "^9.14.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
   },

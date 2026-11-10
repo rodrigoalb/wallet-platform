@@ -1,3 +1,4 @@
+import { createLogger } from '@app/common';
 import { MikroORM } from '@mikro-orm/core';
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
@@ -8,7 +9,7 @@ import { configureApp } from '../src/configure-app';
 export async function createTestApp(): Promise<{ app: INestApplication; orm: MikroORM }> {
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
   const app = moduleRef.createNestApplication({ logger: false });
-  configureApp(app);
+  configureApp(app, createLogger('wallet-service-test'));
   await app.init();
   const orm = app.get(MikroORM);
   await resetDatabase(orm);

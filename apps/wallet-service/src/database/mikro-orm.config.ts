@@ -1,3 +1,4 @@
+import { createLogger } from '@app/common';
 import { Migrator } from '@mikro-orm/migrations';
 import { defineConfig, Options } from '@mikro-orm/postgresql';
 import { Player } from '../players/domain/player.entity';
@@ -12,6 +13,7 @@ import { migrationsList } from './migrations';
  * código de produção é empacotado pelo webpack em um único arquivo.
  */
 export function buildOrmConfig(db: DatabaseConfig): Options {
+  const ormLogger = createLogger('wallet-service').child({ context: 'MikroORM' });
   return defineConfig({
     host: db.host,
     port: db.port,
@@ -31,6 +33,9 @@ export function buildOrmConfig(db: DatabaseConfig): Options {
     },
     // O esquema evolui só por migrações versionadas, nunca por sincronização automática.
     ensureDatabase: false,
+    // Logs do ORM (ex.: migrações aplicadas) saem no mesmo formato JSON do resto.
+    colors: false,
+    logger: (message) => ormLogger.info(message),
   });
 }
 

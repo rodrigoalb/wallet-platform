@@ -1,12 +1,15 @@
+import { correlationIdMiddleware } from '@app/common';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { Logger } from 'pino';
 import { AllExceptionsFilter } from './shared/http/all-exceptions.filter';
 
 /**
  * Configuração HTTP compartilhada entre main.ts e os testes e2e, para que os
  * testes exercitem exatamente o mesmo pipeline de validação e erros.
  */
-export function configureApp(app: INestApplication): void {
+export function configureApp(app: INestApplication, logger: Logger): void {
+  app.use(correlationIdMiddleware(logger));
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true, // remove campos não declarados no DTO

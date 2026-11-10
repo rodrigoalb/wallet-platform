@@ -1,0 +1,80 @@
+# Sobe todo o ambiente com um comando:  docker compose up --build
+# Nada aqui depende de conta AWS real: SNS, SQS, S3 e Secrets Manager rodam no LocalStack.
+
+x-aws-env: &aws-env
+  AWS_REGION: us-east-1
+  AWS_ENDPOINT: http://localstack:4566
+  # Credenciais fictícias aceitas pelo LocalStack (não são segredos).
+  AWS_ACCESS_KEY_ID: test
+  AWS_SECRET_ACCESS_KEY: test
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${DB_USER:-wallet}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-wallet-local-password}
+      POSTGRES_DB: wallet
+    ports:
+      - '${POSTGRES_HOST_PORT:-5432}:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-wallet} -d wallet']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  localstack:
+    # Versão fixada: a partir de 2026 a tag "latest" exige conta LocalStack.
+    # A 4.12 é a edição comunidade e roda sem cadastro (ver docs/adr/0005).
+    image: localstack/localstack:4.12
+    environment:
+      SERVICES: sns,sqs,s3,secretsmanager
+      AWS_DEFAULT_REGION: us-east-1
+      STATEMENTS_BUCKET: wallet-statements
+      DB_USER: ${DB_USER:-wallet}
+      DB_PASSWORD: ${DB_PASSWORD:-wallet-local-password}
+    ports:
+      - '4566:4566'
+    volumes:
+      - ./infra/localstack/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh:ro
+    healthcheck:
+      # Só fica saudável depois que o script de init terminou.
+      test: ['CMD-SHELL', 'curl -sf localhost:4566/_localstack/init/ready | grep -q ''"completed": true''']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  wallet-service:
+    build:
+      context: .
+      dockerfile: apps/wallet-service/Dockerfile
+    environment:
+      <<: *aws-env
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: wallet
+      DB_USER: ${DB_USER:-wallet}
+      DB_PASSWORD: ${DB_PASSWORD:-wallet-local-password}
+      LOG_LEVEL: info
+    ports:
+      - '3000:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://localhost:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:

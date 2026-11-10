@@ -50,6 +50,18 @@ describe('Jogadores e carteiras (e2e)', () => {
     expect(fetched.body.playerId).toBe(player.body.id);
   });
 
+  it('devolve o correlationId recebido e o inclui no corpo de erro', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/players/7b0e8b7e-8f3a-4d55-9d0e-0b6a3c1e2f10')
+      .set('X-Correlation-Id', 'teste-123')
+      .expect(404);
+    expect(res.headers['x-correlation-id']).toBe('teste-123');
+    expect(res.body.correlationId).toBe('teste-123');
+
+    const generated = await request(app.getHttpServer()).get('/health').expect(200);
+    expect(generated.headers['x-correlation-id']).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
   it('padroniza erros de validação, conflito e não encontrado', async () => {
     const invalid = await request(app.getHttpServer())
       .post('/players')

@@ -1,3 +1,4 @@
+import { getCorrelationId } from '@app/common';
 import { OptimisticLockError, UniqueConstraintViolationException } from '@mikro-orm/core';
 import {
   ArgumentsHost,
@@ -23,6 +24,8 @@ export interface ErrorBody {
   message: string | string[];
   path: string;
   timestamp: string;
+  /** Mesmo id do header X-Correlation-Id: ajuda a achar o erro nos logs. */
+  correlationId?: string;
 }
 
 /**
@@ -49,6 +52,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message,
       path: request.url,
       timestamp: new Date().toISOString(),
+      correlationId: getCorrelationId(),
     };
     response.status(status).json(body);
   }
