@@ -61,6 +61,8 @@ services:
       EVENTS_TOPIC_ARN: arn:aws:sns:us-east-1:000000000000:wallet-events
       STATEMENTS_BUCKET: wallet-statements
       STATEMENT_URL_TTL_SECONDS: 300
+      # Permite que a página de demonstração (localhost:3001) leia o saldo pela API.
+      CORS_ORIGINS: http://localhost:3001
       # As URLs pré-assinadas são abertas no seu navegador, que enxerga "localhost".
       AWS_PUBLIC_ENDPOINT: http://localhost:4566
       LOG_LEVEL: info

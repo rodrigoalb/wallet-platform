@@ -24,6 +24,8 @@ export interface WalletServiceConfig {
   statementsBucket: string;
   /** Validade das URLs pré-assinadas de download do extrato. */
   statementUrlTtlSeconds: number;
+  /** Origens de navegador autorizadas a chamar a API (CORS). Vazio = nenhuma. */
+  corsOrigins: string[];
 }
 
 /** Token de injeção da configuração (equivalente a um @ConfigurationProperties do Spring). */
@@ -66,5 +68,9 @@ export async function loadWalletConfig(): Promise<WalletServiceConfig> {
     ),
     statementsBucket: optionalEnv('STATEMENTS_BUCKET', 'wallet-statements'),
     statementUrlTtlSeconds: intEnv('STATEMENT_URL_TTL_SECONDS', 300),
+    corsOrigins: optionalEnv('CORS_ORIGINS', '')
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean),
   };
 }

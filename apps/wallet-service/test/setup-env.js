@@ -7,3 +7,4 @@ process.env.DB_NAME ??= 'wallet_test';
 // O próprio teste controla as migrações (ver resetDatabase).
 process.env.RUN_MIGRATIONS = 'false';
 process.env.LOG_LEVEL ??= 'silent';
+process.env.CORS_ORIGINS ??= 'http://localhost:3001';

@@ -117,6 +117,8 @@
     <script>
       const $ = (id) => document.getElementById(id);
       const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+      // A API REST roda no mesmo host, na porta 3000 (CORS liberado para esta página).
+      const WALLET_API = location.protocol + '//' + location.hostname + ':3000';
       let socket;
 
       // Permite abrir a página já com o jogador: /?playerId=...
@@ -127,10 +129,44 @@
         $('status').className = kind || '';
       }
 
+      // Limpa tudo que pertencia ao jogador anterior.
+      function resetView() {
+        $('balance').textContent = '--';
+        $('wallet').textContent = '';
+        $('events').innerHTML = '<li class="muted">Nenhuma ainda.</li>';
+        $('tip').hidden = true;
+      }
+
+      function showWallet(walletId, amountCents) {
+        $('balance').textContent = brl.format(amountCents / 100);
+        $('wallet').textContent = 'Carteira ' + walletId;
+        $('tip').hidden = false;
+        $('curl').textContent =
+          'curl -X POST ' + WALLET_API + '/wallets/' + walletId + '/deposits ' +
+          '-H "Content-Type: application/json" -H "Idempotency-Key: ' + crypto.randomUUID() + '" ' +
+          '-d \'{"amountCents": 1000}\'';
+      }
+
+      // Saldo atual pela API REST. O WebSocket só avisa mudanças futuras.
+      async function loadCurrentBalance(playerId) {
+        const res = await fetch(WALLET_API + '/players/' + encodeURIComponent(playerId) + '/wallet');
+        if (res.ok) {
+          const wallet = await res.json();
+          showWallet(wallet.id, wallet.balance.amountCents);
+          return;
+        }
+        const body = await res.json().catch(() => ({}));
+        $('wallet').textContent =
+          body.error === 'WALLET_NOT_FOUND'
+            ? 'Este jogador ainda não tem carteira.'
+            : 'Não foi possível carregar a carteira (' + (body.error || 'HTTP ' + res.status) + ').';
+      }
+
       $('connect').addEventListener('click', async () => {
         const playerId = $('playerId').value.trim();
         if (!playerId) return setStatus('Informe o ID do jogador.', 'err');
         if (socket) socket.disconnect();
+        resetView();
 
         $('connect').disabled = true;
         try {
@@ -145,14 +181,18 @@
 
           // 2) Conecta enviando o token no handshake.
           socket = io({ auth: { token } });
-          socket.on('connect', () => setStatus('Conectado como ' + playerId + '.', 'ok'));
+          socket.on('connect', () => {
+            setStatus('Conectado como ' + playerId + '.', 'ok');
+            // Lê o saldo atual só depois de conectado: qualquer mudança a partir
+            // daqui chega pelo WebSocket. Também recarrega após uma reconexão.
+            loadCurrentBalance(playerId).catch((err) => setStatus('Erro: ' + err.message, 'err'));
+          });
           socket.on('connect_error', (err) => setStatus('Conexão recusada: ' + err.message, 'err'));
           socket.on('disconnect', () => setStatus('Desconectado.'));
 
           // 3) Recebe só os eventos deste jogador (sala própria no servidor).
           socket.on('balance.updated', (event) => {
-            $('balance').textContent = brl.format(event.balance.amountCents / 100);
-            $('wallet').textContent = 'Carteira ' + event.walletId;
+            showWallet(event.walletId, event.balance.amountCents);
             if ($('events').querySelector('.muted')) $('events').innerHTML = '';
             const item = document.createElement('li');
             const when = new Date(event.occurredAt).toLocaleTimeString('pt-BR');
@@ -160,12 +200,6 @@
             item.children[0].textContent = when + ' | lançamento ' + event.transactionId.slice(0, 8);
             item.children[1].textContent = brl.format(event.balance.amountCents / 100);
             $('events').prepend(item);
-
-            $('tip').hidden = false;
-            $('curl').textContent =
-              'curl -X POST http://localhost:3000/wallets/' + event.walletId + '/deposits ' +
-              '-H "Content-Type: application/json" -H "Idempotency-Key: ' + crypto.randomUUID() + '" ' +
-              '-d \'{"amountCents": 1000}\'';
           });
         } catch (err) {
           setStatus('Erro: ' + err.message, 'err');

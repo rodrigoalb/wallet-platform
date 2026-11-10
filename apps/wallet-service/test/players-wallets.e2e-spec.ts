@@ -110,6 +110,20 @@ describe('Jogadores e carteiras (e2e)', () => {
     expect(missing.body.error).toBe('PLAYER_NOT_FOUND');
   });
 
+  it('libera CORS só para as origens configuradas', async () => {
+    const allowed = await request(app.getHttpServer())
+      .get('/health')
+      .set('Origin', 'http://localhost:3001')
+      .expect(200);
+    expect(allowed.headers['access-control-allow-origin']).toBe('http://localhost:3001');
+
+    const other = await request(app.getHttpServer())
+      .get('/health')
+      .set('Origin', 'https://site-qualquer.example')
+      .expect(200);
+    expect(other.headers['access-control-allow-origin']).toBeUndefined();
+  });
+
   it('padroniza erros de validação, conflito e não encontrado', async () => {
     const invalid = await request(app.getHttpServer())
       .post('/players')

@@ -2,6 +2,7 @@ import { correlationIdMiddleware } from '@app/common';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger } from 'pino';
+import { WALLET_CONFIG, WalletServiceConfig } from './config/wallet-config';
 import { AllExceptionsFilter } from './shared/http/all-exceptions.filter';
 
 /**
@@ -19,6 +20,14 @@ export function configureApp(app: INestApplication, logger: Logger): void {
   );
   app.useGlobalFilters(new AllExceptionsFilter());
   app.enableShutdownHooks();
+
+  // A página de demonstração (porta 3001) lê o saldo direto desta API (porta 3000).
+  // Como são origens diferentes, o navegador exige CORS. Liberamos só as origens
+  // configuradas em CORS_ORIGINS, nunca "*".
+  const { corsOrigins } = app.get<WalletServiceConfig>(WALLET_CONFIG);
+  if (corsOrigins.length > 0) {
+    app.enableCors({ origin: corsOrigins });
+  }
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Wallet Service')
