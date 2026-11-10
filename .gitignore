@@ -1,0 +1,17 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Segredos e configuração local nunca vão para o Git
+.env
+.env.*
+!.env.example
+
+# Dados locais do LocalStack
+.localstack/
+
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
