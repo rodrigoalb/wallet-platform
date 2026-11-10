@@ -13,14 +13,18 @@ export class WalletResponse {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty({ format: 'uuid' }) playerId!: string;
   @ApiProperty({ type: MoneyResponse }) balance!: MoneyResponse;
+  @ApiProperty() version!: number;
   @ApiProperty() createdAt!: string;
+  @ApiProperty() updatedAt!: string;
 
   static from(wallet: Wallet): WalletResponse {
     return {
       id: wallet.id,
       playerId: wallet.playerId,
-      balance: { amountCents: wallet.balanceInCents, currency: wallet.currency },
+      balance: { amountCents: wallet.balance.amountCents, currency: wallet.currency },
+      version: wallet.version,
       createdAt: wallet.createdAt.toISOString(),
+      updatedAt: wallet.updatedAt.toISOString(),
     };
   }
 }

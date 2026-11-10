@@ -24,7 +24,7 @@ describe('CreateWalletUseCase', () => {
     const wallet = await useCase.execute(player.id);
 
     expect(wallet.playerId).toBe(player.id);
-    expect(wallet.balanceInCents).toBe(0);
+    expect(wallet.balance.amountCents).toBe(0);
     expect(wallet.currency).toBe('BRL');
   });
 

@@ -21,7 +21,8 @@
     "db:test:down": "docker compose -f docker-compose.test.yml down -v",
     "migration:create": "mikro-orm migration:create",
     "migration:up": "mikro-orm migration:up",
-    "migration:check": "mikro-orm migration:check"
+    "migration:check": "mikro-orm migration:check",
+    "seed": "ts-node -r tsconfig-paths/register apps/wallet-service/src/database/seed.ts"
   },
   "jest": {
     "moduleFileExtensions": [

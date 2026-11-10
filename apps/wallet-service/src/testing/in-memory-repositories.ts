@@ -1,3 +1,12 @@
+import { DomainEvent } from '@app/common';
+import { EventPublisher } from '../shared/application/event-publisher';
+import { TransactionManager } from '../shared/application/transaction-manager';
+import { Transaction } from '../wallets/domain/transaction.entity';
+import {
+  Page,
+  TransactionFilter,
+  TransactionRepository,
+} from '../wallets/domain/transaction.repository';
 import { Player } from '../players/domain/player.entity';
 import { PlayerRepository } from '../players/domain/player.repository';
 import { Wallet } from '../wallets/domain/wallet.entity';
@@ -38,6 +47,48 @@ export class InMemoryWalletRepository implements WalletRepository {
 
   save(wallet: Wallet): Promise<void> {
     this.items.set(wallet.id, wallet);
+    return Promise.resolve();
+  }
+}
+
+export class InMemoryTransactionRepository implements TransactionRepository {
+  readonly items: Transaction[] = [];
+
+  findByIdempotencyKey(walletId: string, key: string): Promise<Transaction | null> {
+    return Promise.resolve(
+      this.items.find((t) => t.walletId === walletId && t.idempotencyKey === key) ?? null,
+    );
+  }
+
+  findPage(filter: TransactionFilter): Promise<Page<Transaction>> {
+    const matching = this.items.filter(
+      (t) => t.walletId === filter.walletId && (!filter.type || t.type === filter.type),
+    );
+    const start = (filter.page - 1) * filter.limit;
+    return Promise.resolve({
+      items: matching.slice(start, start + filter.limit),
+      total: matching.length,
+    });
+  }
+
+  add(transaction: Transaction): Promise<void> {
+    this.items.push(transaction);
+    return Promise.resolve();
+  }
+}
+
+/** Executa o trabalho diretamente; os testes de transação real ficam no e2e. */
+export class FakeTransactionManager implements TransactionManager {
+  run<T>(work: () => Promise<T>): Promise<T> {
+    return work();
+  }
+}
+
+export class RecordingEventPublisher implements EventPublisher {
+  readonly published: DomainEvent[] = [];
+
+  publish(events: DomainEvent[]): Promise<void> {
+    this.published.push(...events);
     return Promise.resolve();
   }
 }

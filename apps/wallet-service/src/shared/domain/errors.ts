@@ -25,3 +25,13 @@ export class ConflictError extends DomainError {}
 
 /** Regra de negócio violada, como saldo insuficiente (422). */
 export class BusinessRuleError extends DomainError {}
+
+/**
+ * Duas operações tentaram alterar o mesmo dado ao mesmo tempo (optimistic lock
+ * ou violação de unicidade). É seguro repetir a operação.
+ */
+export class ConcurrencyConflictError extends ConflictError {
+  constructor(message = 'O recurso foi alterado por outra operação. Tente novamente.') {
+    super('CONCURRENT_MODIFICATION', message);
+  }
+}

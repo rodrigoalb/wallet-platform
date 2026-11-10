@@ -1,6 +1,7 @@
 import { Migrator } from '@mikro-orm/migrations';
 import { defineConfig, Options } from '@mikro-orm/postgresql';
 import { Player } from '../players/domain/player.entity';
+import { Transaction } from '../wallets/domain/transaction.entity';
 import { Wallet } from '../wallets/domain/wallet.entity';
 import { DatabaseConfig, readDatabaseConfigFromEnv } from '../config/wallet-config';
 import { migrationsList } from './migrations';
@@ -17,7 +18,7 @@ export function buildOrmConfig(db: DatabaseConfig): Options {
     user: db.user,
     password: db.password,
     dbName: db.name,
-    entities: [Player, Wallet],
+    entities: [Player, Wallet, Transaction],
     extensions: [Migrator],
     migrations: {
       tableName: 'mikro_orm_migrations',
