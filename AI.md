@@ -38,11 +38,11 @@ Situações reais desta construção em que a primeira opção não servia ou um
   - gateway WebSocket testado com clientes socket.io reais (sem token é recusado; o evento chega só ao jogador certo).
 - **Ambiente completo:** `docker compose down -v` seguido de `docker compose up -d --build --wait`, verificando os cinco containers saudáveis e o roteiro de demonstração (`scripts/demo.sh`) do início ao fim.
 - **Fluxos assíncronos de verdade:** depósito com notificação chegando pelo WebSocket em cerca de 60 ms; extrato gerado no S3 e baixado pela URL pré-assinada; mensagem inválida indo para a DLQ após 3 tentativas; mesmo `correlationId` nos logs dos serviços envolvidos.
+- **CI:** o primeiro push disparou o GitHub Actions e os três jobs passaram (lint e unitários, e2e com PostgreSQL e build das imagens). Um aviso sobre actions rodando em Node 20 levou à atualização de `actions/checkout` e `actions/setup-node` para a v7.
 - **Segredos:** conferido que as variáveis de ambiente dos containers não contêm a senha do banco nem o segredo do JWT.
 
 ### O que não foi verificado pelo agente
 
-- O workflow do GitHub Actions não foi executado (não há acesso ao GitHub no ambiente de desenvolvimento). Os mesmos comandos rodaram localmente com sucesso; a confirmação final vem do primeiro push.
 - A página `public/index.html` não foi aberta num navegador pelo agente. O JavaScript dela passou na checagem de sintaxe, e o mesmo fluxo (pedir token, conectar, receber `balance.updated`) foi testado com um cliente socket.io em Node.
 - O ambiente de desenvolvimento era Linux (WSL 2). A execução no Windows com Docker Desktop segue o mesmo caminho, mas não foi testada diretamente.
 
